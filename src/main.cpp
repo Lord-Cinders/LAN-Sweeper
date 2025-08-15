@@ -5,7 +5,7 @@
 
 #define WIDTH 200
 #define HEIGHT 200
-#define MULTIPLIER 3
+#define MULTIPLIER 4
 #define DIFFICULTY 10
 
 void print_line(int width)
@@ -122,15 +122,26 @@ int main(int argv, char **argc)
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-    for (int i = 0; i < HEIGHT * MULTIPLIER; i += HEIGHT * MULTIPLIER / DIFFICULTY)
+    int dx = (WIDTH * MULTIPLIER) / DIFFICULTY;
+    int dy = (HEIGHT * MULTIPLIER) / DIFFICULTY;
+
+    // drawing vertical lines
+    for (int i = 0; i <= DIFFICULTY; i++)
     {
-        for (int j = 0; j < WIDTH * MULTIPLIER; j += WIDTH * MULTIPLIER / DIFFICULTY)
-        {
-            SDL_RenderDrawLine(renderer, i, j, HEIGHT * MULTIPLIER, j);
-            SDL_RenderDrawLine(renderer, i, j, i, WIDTH * MULTIPLIER);
-        }
+        int x = i * dx;
+        SDL_RenderDrawLine(renderer, x, 0, x, HEIGHT * MULTIPLIER);
     }
-    int dx = (WIDTH * MULTIPLIER) / DIFFICULTY, dy = (HEIGHT * MULTIPLIER) / DIFFICULTY;
+
+    // drawing horizontal lines
+    for (int i = 0; i <= DIFFICULTY; i++)
+    {
+        int y = i * dy;
+        SDL_RenderDrawLine(renderer, 0, y, WIDTH * MULTIPLIER, y);
+    }
+
+    // draw right and bottom lines incase they are over the screens size
+    SDL_RenderDrawLine(renderer, WIDTH * MULTIPLIER - 1, 0, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
+    SDL_RenderDrawLine(renderer, 0, HEIGHT * MULTIPLIER - 1, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
 
     for (int i = 0; i < DIFFICULTY; i += 1)
     {
