@@ -6,7 +6,7 @@
 #define WIDTH 200
 #define HEIGHT 200
 #define MULTIPLIER 3
-#define DIFFICULTY 8
+#define DIFFICULTY 10
 
 void print_line(int width)
 {
@@ -19,13 +19,13 @@ void print_line(int width)
 
 void print_board(char **board, int width, int height)
 {
-    for (int i = 0; i < width; i++)
+    for (int i = 0; i < height; i++)
     {
         print_line(width);
         std::cout << "|";
-        for (int j = 0; j < height; j++)
+        for (int j = 0; j < width; j++)
         {
-            char temp = board[i][j] > 0 ? board[i][j] : ' ';
+            char temp = board[j][i] > 0 ? board[j][i] : ' ';
             std::cout << temp << "|";
         }
         std::cout << std::endl;
@@ -37,14 +37,14 @@ void generate_random_coordinates(char **board, int count, int width, int height)
 {
     int g_count = 0, bx = 0, by = 0;
     srand(time(NULL));
-    while (g_count < count * 2)
+    while (g_count < count)
     {
 
-        bx = rand() % (width - 1);
-        by = rand() % (height - 1);
-        if (board[bx][by] != 'B')
+        bx = rand() % width;
+        by = rand() % height;
+        if (board[by][bx] != 'B')
         {
-            board[bx][by] = 'B';
+            board[by][bx] = 'B';
             g_count += 1;
         }
     }
@@ -136,12 +136,12 @@ int main(int argv, char **argc)
     {
         for (int j = 0; j < DIFFICULTY; j += 1)
         {
-            if (board[i][j] == 'B')
+            if (board[j][i] == 'B')
             {
                 // std::cout << i << " " << j << std::endl;
                 int x1, y1;
-                x1 = (j)*dx;
-                y1 = (i)*dy;
+                x1 = (j) * dx;
+                y1 = (i) * dy;
                 // std::cout << x1 << " " << y1 << std::endl;
                 SDL_RenderDrawLine(renderer, x1, y1, x1 + dx, y1 + dy);
             }
