@@ -145,9 +145,6 @@ int main(int argv, char **argc)
     generate_random_bombs(board, DIFFICULTY, DIFFICULTY, DIFFICULTY);
     generate_hints(board, DIFFICULTY, DIFFICULTY);
 
-    explore_board(board, DIFFICULTY, DIFFICULTY, 5, 3);
-    print_board(board, DIFFICULTY, DIFFICULTY);
-
     SDL_Renderer *renderer = SDL_CreateRenderer(window, 0, 0);
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -211,13 +208,17 @@ int main(int argv, char **argc)
                     SDL_GetMouseState(&mousex, &mousey);
                     // std::cout << "Raw Mouse Position: " << mousex << " " << mousey << std::endl;
                     // std::cout << "Relative Mouse Position: " << mousex / dx << " " << mousey / dy << std::endl;
-                    int row = mousey / dy;
-                    int col = mousex / dx;
-                    if (row >= 0 && row < DIFFICULTY && col >= 0 && col < DIFFICULTY)
+                    int y = mousey / dy;
+                    int x = mousex / dx;
+                    if (x >= 0 && x < DIFFICULTY && y >= 0 && y < DIFFICULTY)
                     {
-                        if (board[row][col] == 'B')
+                        if (board[y][x] == 'B')
                         {
                             std::cout << "BOOOOOOOOM!!!!!" << std::endl;
+                        }
+                        else {
+                            explore_board(board, DIFFICULTY, DIFFICULTY, x, y);
+                            print_board(board, DIFFICULTY, DIFFICULTY);
                         }
                     }
                 }
