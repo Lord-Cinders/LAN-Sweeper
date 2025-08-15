@@ -25,7 +25,7 @@ void print_board(char **board, int width, int height)
         std::cout << "|";
         for (int j = 0; j < width; j++)
         {
-            char temp = board[j][i] > 0 ? board[j][i] : ' ';
+            char temp = board[i][j] > 0 ? board[i][j] : ' ';
             std::cout << temp << "|";
         }
         std::cout << std::endl;
@@ -143,11 +143,12 @@ int main(int argv, char **argc)
     SDL_RenderDrawLine(renderer, WIDTH * MULTIPLIER - 1, 0, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
     SDL_RenderDrawLine(renderer, 0, HEIGHT * MULTIPLIER - 1, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
 
+    // draw bombs
     for (int i = 0; i < DIFFICULTY; i += 1)
     {
         for (int j = 0; j < DIFFICULTY; j += 1)
         {
-            if (board[j][i] == 'B')
+            if (board[i][j] == 'B')
             {
                 // std::cout << i << " " << j << std::endl;
                 int x1, y1;
@@ -176,8 +177,17 @@ int main(int argv, char **argc)
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {
                     SDL_GetMouseState(&mousex, &mousey);
-                    std::cout << "Raw Mouse Position: " << mousex << " " << mousey << std::endl;
-                    std::cout << "Relative Mouse Position: " << mousex / dx << " " << mousey / dy << std::endl;
+                    // std::cout << "Raw Mouse Position: " << mousex << " " << mousey << std::endl;
+                    // std::cout << "Relative Mouse Position: " << mousex / dx << " " << mousey / dy << std::endl;
+                    int row = mousey / dy;
+                    int col = mousex / dx;
+                    if (row >= 0 && row < DIFFICULTY && col >= 0 && col < DIFFICULTY)
+                    {
+                        if (board[row][col] == 'B')
+                        {
+                            std::cout << "BOOOOOOOOM!!!!!" << std::endl;
+                        }
+                    }
                 }
                 break;
 
