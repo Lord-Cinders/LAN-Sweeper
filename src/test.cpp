@@ -5,8 +5,8 @@
 
 #define WIDTH 200
 #define HEIGHT 200
-#define MULTIPLIER 3
-#define DIFFICULTY 8
+#define MULTIPLIER 4
+#define DIFFICULTY 10
 
 void print_line(int width)
 {
@@ -19,11 +19,11 @@ void print_line(int width)
 
 void print_board(char **board, int width, int height)
 {
-    for (int i = 0; i < width; i++)
+    for (int i = 0; i < height; i++)
     {
         print_line(width);
         std::cout << "|";
-        for (int j = 0; j < height; j++)
+        for (int j = 0; j < width; j++)
         {
             char temp = board[i][j] > 0 ? board[i][j] : ' ';
             std::cout << temp << "|";
@@ -37,15 +37,59 @@ void generate_random_coordinates(char **board, int count, int width, int height)
 {
     int g_count = 0, bx = 0, by = 0;
     srand(time(NULL));
-    while (g_count < count * 2)
+    while (g_count < count)
     {
 
-        bx = rand() % (width - 1);
-        by = rand() % (height - 1);
-        if (board[bx][by] != 'B')
+        bx = rand() % width;
+        by = rand() % height;
+        if (board[by][bx] != 'B')
         {
-            board[bx][by] = 'B';
+            board[by][bx] = 'B';
             g_count += 1;
+        }
+    }
+    print_board(board, width, height);
+}
+
+void generate_hints(char **board, int width, int height)
+{
+
+    int offsets[8][2] = {
+        {-1, -1}, {0, -1}, {1, -1}, // top row
+        {-1, 0},
+        {1, 0}, // same row
+        {-1, 1},
+        {0, 1},
+        {1, 1} // bottom row
+    };
+
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+
+            int count = 0;
+
+            if (board[y][x] == 'B')
+            {
+                continue;
+            }
+
+            for (auto &dir : offsets)
+            {
+                int nr = x + dir[0];
+                int nc = y + dir[1];
+
+                if (nr >= 0 && nr < width && nc >= 0 && nc < height)
+                {
+                    if (board[nc][nr] == 'B')
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            board[y][x] = count + '0';
         }
     }
     print_board(board, width, height);
@@ -78,6 +122,7 @@ int main(int argv, char **argc)
     }
 
     generate_random_coordinates(board, DIFFICULTY, DIFFICULTY, DIFFICULTY);
+    generate_hints(board, DIFFICULTY, DIFFICULTY);
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, 0, 0);
 
@@ -85,16 +130,28 @@ int main(int argv, char **argc)
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
-    for (int i = 0; i < HEIGHT * MULTIPLIER; i += HEIGHT * MULTIPLIER / DIFFICULTY)
-    {
-        for (int j = 0; j < WIDTH * MULTIPLIER; j += WIDTH * MULTIPLIER / DIFFICULTY)
-        {
-            SDL_RenderDrawLine(renderer, i, j, WIDTH * MULTIPLIER, j);
-            SDL_RenderDrawLine(renderer, i, j, i, HEIGHT * MULTIPLIER);
-        }
-    }
-    int dx = (WIDTH * MULTIPLIER) / DIFFICULTY, dy = (HEIGHT * MULTIPLIER) / DIFFICULTY;
+    int dx = (WIDTH * MULTIPLIER) / DIFFICULTY;
+    int dy = (HEIGHT * MULTIPLIER) / DIFFICULTY;
 
+    // drawing vertical lines
+    for (int i = 0; i <= DIFFICULTY; i++)
+    {
+        int x = i * dx;
+        SDL_RenderDrawLine(renderer, x, 0, x, HEIGHT * MULTIPLIER);
+    }
+
+    // drawing horizontal lines
+    for (int i = 0; i <= DIFFICULTY; i++)
+    {
+        int y = i * dy;
+        SDL_RenderDrawLine(renderer, 0, y, WIDTH * MULTIPLIER, y);
+    }
+
+    // draw right and bottom lines incase they are over the screens size
+    SDL_RenderDrawLine(renderer, WIDTH * MULTIPLIER - 1, 0, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
+    SDL_RenderDrawLine(renderer, 0, HEIGHT * MULTIPLIER - 1, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
+
+    // draw bombs
     for (int i = 0; i < DIFFICULTY; i += 1)
     {
         for (int j = 0; j < DIFFICULTY; j += 1)
@@ -128,8 +185,17 @@ int main(int argv, char **argc)
                 if (event.button.button == SDL_BUTTON_LEFT)
                 {
                     SDL_GetMouseState(&mousex, &mousey);
-                    std::cout << "Raw Mouse Position: " << mousex << " " << mousey << std::endl;
-                    std::cout << "Relative Mouse Position: " << mousex / dx << " " << mousey / dy << std::endl;
+                    // std::cout << "Raw Mouse Position: " << mousex << " " << mousey << std::endl;
+                    // std::cout << "Relative Mouse Position: " << mousex / dx << " " << mousey / dy << std::endl;
+                    int row = mousey / dy;
+                    int col = mousex / dx;
+                    if (row >= 0 && row < DIFFICULTY && col >= 0 && col < DIFFICULTY)
+                    {
+                        if (board[row][col] == 'B')
+                        {
+                            std::cout << "BOOOOOOOOM!!!!!" << std::endl;
+                        }
+                    }
                 }
                 break;
 

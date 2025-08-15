@@ -33,7 +33,7 @@ void print_board(char **board, int width, int height)
     print_line(width);
 }
 
-void generate_random_coordinates(char **board, int count, int width, int height)
+void generate_random_bombs(char **board, int count, int width, int height)
 {
     int g_count = 0, bx = 0, by = 0;
     srand(time(NULL));
@@ -51,7 +51,6 @@ void generate_random_coordinates(char **board, int count, int width, int height)
     print_board(board, width, height);
 }
 
-
 void generate_hints(char ** board, int width, int height) {
 
     int offsets[8][2] = {
@@ -67,8 +66,7 @@ void generate_hints(char ** board, int width, int height) {
             
             if (board[y][x] == 'B') { continue; }
 
-            for (auto &dir : offsets)
-            {
+            for (auto &dir : offsets) {
                 int nr = x + dir[0];
                 int nc = y + dir[1];
 
@@ -85,6 +83,37 @@ void generate_hints(char ** board, int width, int height) {
         }
     }
     print_board(board, width, height);
+}
+
+void explore_board(char **board, int width, int height, int x_pos, int y_pos)
+{
+    int offsets[8][2] = {
+        {-1, -1}, {0, -1}, {1, -1}, // top row
+        {-1, 0}, {1, 0},            // same row
+        {-1, 1}, {0, 1}, {1, 1}     // bottom row
+    };
+
+    if (board[y_pos][x_pos] != '0')
+    {
+        return;
+    }
+
+    board[y_pos][x_pos] = 'v';
+    std::cout << "Current x, y: " << x_pos << " " << y_pos << std::endl;
+
+    for (auto &dir : offsets)
+    {
+        int nc = y_pos + dir[1];
+        int nr = x_pos + dir[0];
+
+        if (nr >= 0 && nr < width && nc >= 0 && nc < height)
+        {
+            if (board[nc][nr] == '0')
+            {
+                explore_board(board, width, height, nr, nc);
+            }
+        }
+    }
 }
 
 int main(int argv, char **argc)
@@ -113,8 +142,11 @@ int main(int argv, char **argc)
         }
     }
 
-    generate_random_coordinates(board, DIFFICULTY, DIFFICULTY, DIFFICULTY);
+    generate_random_bombs(board, DIFFICULTY, DIFFICULTY, DIFFICULTY);
     generate_hints(board, DIFFICULTY, DIFFICULTY);
+
+    explore_board(board, DIFFICULTY, DIFFICULTY, 5, 3);
+    print_board(board, DIFFICULTY, DIFFICULTY);
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, 0, 0);
 
