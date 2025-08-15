@@ -51,42 +51,6 @@ void generate_random_coordinates(char **board, int count, int width, int height)
     print_board(board, width, height);
 }
 
-
-void generate_hints(char ** board, int width, int height) {
-
-    int offsets[8][2] = {
-        {-1, -1}, {0, -1}, {1, -1}, // top row
-        {-1, 0}, {1, 0},            // same row
-        {-1, 1}, {0, 1}, {1, 1}     // bottom row
-    };
-
-    for (int y = 0; y < height; y++){
-        for (int x = 0; x < width; x++) {
-            
-            int count = 0;
-            
-            if (board[y][x] == 'B') { continue; }
-
-            for (auto &dir : offsets)
-            {
-                int nr = x + dir[0];
-                int nc = y + dir[1];
-
-                if (nr >= 0 && nr < width && nc >= 0 && nc < height )
-                {
-                    if (board[nc][nr] == 'B')
-                    {
-                        count++;
-                    }
-                }
-            }
-    
-            board[y][x] = count + '0';
-        }
-    }
-    print_board(board, width, height);
-}
-
 int main(int argv, char **argc)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING))
@@ -114,7 +78,6 @@ int main(int argv, char **argc)
     }
 
     generate_random_coordinates(board, DIFFICULTY, DIFFICULTY, DIFFICULTY);
-    generate_hints(board, DIFFICULTY, DIFFICULTY);
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, 0, 0);
 
@@ -126,8 +89,8 @@ int main(int argv, char **argc)
     {
         for (int j = 0; j < WIDTH * MULTIPLIER; j += WIDTH * MULTIPLIER / DIFFICULTY)
         {
-            SDL_RenderDrawLine(renderer, i, j, HEIGHT * MULTIPLIER, j);
-            SDL_RenderDrawLine(renderer, i, j, i, WIDTH * MULTIPLIER);
+            SDL_RenderDrawLine(renderer, i, j, WIDTH * MULTIPLIER, j);
+            SDL_RenderDrawLine(renderer, i, j, i, HEIGHT * MULTIPLIER);
         }
     }
     int dx = (WIDTH * MULTIPLIER) / DIFFICULTY, dy = (HEIGHT * MULTIPLIER) / DIFFICULTY;
