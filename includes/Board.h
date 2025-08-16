@@ -7,10 +7,10 @@ class Board {
     public:
         Board(int w, int h, int diff);
 
-        unsigned long get_seed() { return seed; }
-        int get_width() { return width; }
-        int get_height() { return height; }
-        int get_difficulty() { return difficulty; }
+        inline unsigned long get_seed() { return seed; }
+        inline int get_width() { return width; }
+        inline int get_height() { return height; }
+        inline int get_difficulty() { return difficulty; }
 
         void initialize_board();
         void generate_random_bombs();

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <ctime>
 #include "Board.h"
+#include "Title.h"
 
 #define WIDTH 200
 #define HEIGHT 200
@@ -111,6 +112,7 @@ int main(int argv, char **argc)
         WIDTH * MULTIPLIER,
         HEIGHT * MULTIPLIER,
         0);
+    
 
     // char **board = new char *[DIFFICULTY];
     // for (int i = 0; i < DIFFICULTY; i++)
@@ -143,7 +145,13 @@ int main(int argv, char **argc)
         TTF_SizeText(font, currDigit, &rectW, &rectH);
     }
 
+    Title title = Title(window, renderer);
+
+    
+
     generate_initial_board(renderer);
+
+    title.Draw(WIDTH * MULTIPLIER, HEIGHT * MULTIPLIER);
 
     // draw bombs
     // for (int i = 0; i < DIFFICULTY; i += 1)
