@@ -1,3 +1,6 @@
+BUILD_DIR = bin
+ASSETS_DIR = assets
+
 FLAGS= -std=c++17 -g
 
 WARNINGS=  -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor -Wold-style-cast -Wcast-align	\
@@ -8,11 +11,18 @@ WARNINGS=  -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor -Wold-style-cast
 
 INCLUDES=  -I ./includes
 
-LINKS= -L ./lib -lmingw32 -lSDL2main -lSDL2 
+LINKS= -L ./lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf
 
 OBJECTS= 
 
-all: $(OBJECTS)
+$(BUILD_DIR):
+	@mkdir $(BUILD_DIR) 2>NUL || true
+
+copy_assets: $(BUILD_DIR)
+	xcopy $(ASSETS_DIR) $(BUILD_DIR)\assets /E /I /Y
+	
+all: copy_assets 
+	$(OBJECTS)
 	g++ $(FLAGS) $(WARNINGS) $(INCLUDES) ./src/main.cpp $(OBJECTS) $(LINKS) -o ./bin/main 
 
 build: $(OBJECTS)
