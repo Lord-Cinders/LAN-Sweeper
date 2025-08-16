@@ -1,5 +1,7 @@
-BUILD_DIR = bin
-
+BUILD_DIR = build
+BIN_DIR = bin
+$(shell mkdir -p $(BIN_DIR))
+$(shell mkdir -p $(BUILD_DIR))
 ASSETS_DIR = assets
 
 FLAGS= -std=c++17 -g
@@ -16,22 +18,19 @@ LINKS= -L ./lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf
 
 OBJECTS= ./build/Board.o ./build/Title.o
 
-$(BUILD_DIR):
-	@mkdir $(BUILD_DIR) 2>NUL || true
-
 build: $(OBJECTS)
 
-copy_assets: $(BUILD_DIR)
-	xcopy $(ASSETS_DIR) $(BUILD_DIR)\assets /E /I /Y
+copy_assets:
+	xcopy $(ASSETS_DIR) $(BIN_DIR)\assets /E /I /Y
 	
 all: copy_assets $(OBJECTS)
 	g++ $(FLAGS) $(WARNINGS) $(INCLUDES) ./src/main.cpp $(OBJECTS) $(LINKS) -o ./bin/main 
 
 ./build/Board.o: ./src/Board.cpp
-	g++ $(FLAGS) $(WARNINGS) $(INCLUDES) ./src/Board.cpp -c -o ./build/Board.o
+	g++ $(FLAGS) $(WARNINGS) $(INCLUDES) ./src/Board.cpp -c -o ./$(BUILD_DIR)/Board.o
 
 ./build/Title.o: ./src/Title.cpp
-	g++ $(FLAGS) $(WARNINGS) $(INCLUDES) ./src/Title.cpp -c -o ./build/Title.o
+	g++ $(FLAGS) $(WARNINGS) $(INCLUDES) ./src/Title.cpp -c -o ./$(BUILD_DIR)/Title.o
 	
 run: all
 	./bin/main
