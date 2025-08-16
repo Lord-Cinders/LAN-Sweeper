@@ -9,24 +9,26 @@ WARNINGS=  -Wall -Wextra -Wpedantic -Wshadow -Wnon-virtual-dtor -Wold-style-cast
 		   -Wmisleading-indentation -Wduplicated-cond -Wduplicated-branches -Wlogical-op     	\
 		   -Wnull-dereference # -Wsign-conversion
 
-INCLUDES=  -I ./includes
+INCLUDES=  -I ./includes 
 
 LINKS= -L ./lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf
 
-OBJECTS= 
+OBJECTS= ./build/Board.o 
 
 $(BUILD_DIR):
 	@mkdir $(BUILD_DIR) 2>NUL || true
 
+build: $(OBJECTS)
+
 copy_assets: $(BUILD_DIR)
 	xcopy $(ASSETS_DIR) $(BUILD_DIR)\assets /E /I /Y
 	
-all: copy_assets 
-	$(OBJECTS)
+all: copy_assets $(OBJECTS)
 	g++ $(FLAGS) $(WARNINGS) $(INCLUDES) ./src/main.cpp $(OBJECTS) $(LINKS) -o ./bin/main 
 
-build: $(OBJECTS)
-
+./build/Board.o: ./src/Board.cpp
+	g++ $(FLAGS) $(WARNINGS) $(INCLUDES) ./src/Board.cpp -c -o ./build/Board.o
+	
 run: all
 	./bin/main
 

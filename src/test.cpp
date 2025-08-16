@@ -1,12 +1,16 @@
 #include <iostream>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <cmath>
 #include <ctime>
 
 #define WIDTH 200
 #define HEIGHT 200
-#define MULTIPLIER 4
+#define MULTIPLIER 3
 #define DIFFICULTY 10
+
+TTF_Font *font;
+SDL_Texture *digitTextures[10];
 
 void print_line(int width)
 {
@@ -33,7 +37,7 @@ void print_board(char **board, int width, int height)
     print_line(width);
 }
 
-void generate_random_coordinates(char **board, int count, int width, int height)
+void generate_random_bombs(char **board, int count, int width, int height)
 {
     int g_count = 0, bx = 0, by = 0;
     srand(time(NULL));
@@ -95,6 +99,48 @@ void generate_hints(char **board, int width, int height)
     print_board(board, width, height);
 }
 
+void explore_board(char **board, int width, int height, int x_pos, int y_pos)
+{
+    int offsets[8][2] = {
+        {-1, -1}, {0, -1}, {1, -1}, // top row
+        {-1, 0},
+        {1, 0}, // same row
+        {-1, 1},
+        {0, 1},
+        {1, 1} // bottom row
+    };
+
+    if (board[y_pos][x_pos] != '0')
+    {
+        return;
+    }
+
+    board[y_pos][x_pos] = '\0';
+    std::cout << "Current x, y: " << x_pos << " " << y_pos << std::endl;
+
+    for (auto &dir : offsets)
+    {
+        int nc = y_pos + dir[1];
+        int nr = x_pos + dir[0];
+
+        if (nr >= 0 && nr < width && nc >= 0 && nc < height)
+        {
+            if (board[nc][nr] == '0')
+            {
+                explore_board(board, width, height, nr, nc);
+            }
+        }
+    }
+}
+
+SDL_Texture *generate_digit_texture(char *digit, SDL_Renderer *renderer)
+{
+    SDL_Surface *surface = TTF_RenderText_Solid(font, digit, {255, 255, 255, 255});
+    // SDL_FreeSurface(surface);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    return texture;
+}
+
 int main(int argv, char **argc)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING))
@@ -102,6 +148,13 @@ int main(int argv, char **argc)
         std::cout << "Failed to initialize SDL" << std::endl;
         return -1;
     }
+
+    if (TTF_Init() < 0)
+    {
+        std::cout << "Failed to initialize SDL TTF: " << SDL_GetError() << std::endl;
+    }
+
+    font = TTF_OpenFont("assets/OpenSans.ttf", 20);
 
     SDL_Window *window = SDL_CreateWindow(
         "LANsweeper",
@@ -121,7 +174,7 @@ int main(int argv, char **argc)
         }
     }
 
-    generate_random_coordinates(board, DIFFICULTY, DIFFICULTY, DIFFICULTY);
+    generate_random_bombs(board, DIFFICULTY, DIFFICULTY, DIFFICULTY);
     generate_hints(board, DIFFICULTY, DIFFICULTY);
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, 0, 0);
@@ -129,6 +182,13 @@ int main(int argv, char **argc)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+    for (int i = 0; i < 9; i++)
+    {
+        char currDigit[2] = {(i == 0 ? '\0' : (char)('0' + i)), '\0'};
+        digitTextures[i] = generate_digit_texture(currDigit, renderer);
+        std::cout << "Generated for:" << (char)('0' + i) << std::endl;
+    }
 
     int dx = (WIDTH * MULTIPLIER) / DIFFICULTY;
     int dy = (HEIGHT * MULTIPLIER) / DIFFICULTY;
@@ -150,20 +210,25 @@ int main(int argv, char **argc)
     // draw right and bottom lines incase they are over the screens size
     SDL_RenderDrawLine(renderer, WIDTH * MULTIPLIER - 1, 0, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
     SDL_RenderDrawLine(renderer, 0, HEIGHT * MULTIPLIER - 1, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
-
     // draw bombs
     for (int i = 0; i < DIFFICULTY; i += 1)
     {
         for (int j = 0; j < DIFFICULTY; j += 1)
         {
+            int x1, y1;
+            x1 = (j)*dx;
+            y1 = (i)*dy;
             if (board[i][j] == 'B')
             {
                 // std::cout << i << " " << j << std::endl;
-                int x1, y1;
-                x1 = (j)*dx;
-                y1 = (i)*dy;
+
                 // std::cout << x1 << " " << y1 << std::endl;
                 SDL_RenderDrawLine(renderer, x1, y1, x1 + dx, y1 + dy);
+            }
+            else
+            {
+                SDL_Rect rect = {x1, y1, dx, dy};
+                SDL_RenderCopy(renderer, digitTextures[board[i][j] - '0'], NULL, &rect);
             }
         }
     }
@@ -187,13 +252,18 @@ int main(int argv, char **argc)
                     SDL_GetMouseState(&mousex, &mousey);
                     // std::cout << "Raw Mouse Position: " << mousex << " " << mousey << std::endl;
                     // std::cout << "Relative Mouse Position: " << mousex / dx << " " << mousey / dy << std::endl;
-                    int row = mousey / dy;
-                    int col = mousex / dx;
-                    if (row >= 0 && row < DIFFICULTY && col >= 0 && col < DIFFICULTY)
+                    int y = mousey / dy;
+                    int x = mousex / dx;
+                    if (x >= 0 && x < DIFFICULTY && y >= 0 && y < DIFFICULTY)
                     {
-                        if (board[row][col] == 'B')
+                        if (board[y][x] == 'B')
                         {
                             std::cout << "BOOOOOOOOM!!!!!" << std::endl;
+                        }
+                        else
+                        {
+                            explore_board(board, DIFFICULTY, DIFFICULTY, x, y);
+                            print_board(board, DIFFICULTY, DIFFICULTY);
                         }
                     }
                 }
@@ -207,7 +277,7 @@ int main(int argv, char **argc)
             // std::cout << "Game is running" << std::endl;
         }
     }
-
+    TTF_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     return 0;
