@@ -1,12 +1,16 @@
 #include <iostream>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 #include <cmath>
 #include <ctime>
 
 #define WIDTH 200
 #define HEIGHT 200
-#define MULTIPLIER 4
+#define MULTIPLIER 3
 #define DIFFICULTY 10
+
+TTF_Font *font;
+SDL_Texture *digitTextures[10];
 
 void print_line(int width)
 {
@@ -61,9 +65,9 @@ void generate_hints(char ** board, int width, int height) {
 
     for (int y = 0; y < height; y++){
         for (int x = 0; x < width; x++) {
-            
+
             int count = 0;
-            
+
             if (board[y][x] == 'B') { continue; }
 
             for (auto &dir : offsets) {
@@ -78,7 +82,7 @@ void generate_hints(char ** board, int width, int height) {
                     }
                 }
             }
-    
+
             board[y][x] = count + '0';
         }
     }
@@ -116,6 +120,14 @@ void explore_board(char **board, int width, int height, int x_pos, int y_pos)
     }
 }
 
+SDL_Texture* generate_digit_texture(char *digit, SDL_Renderer *renderer)
+{
+    SDL_Surface *surface = TTF_RenderText_Solid(font, digit, {255, 255, 255, 255});
+    // SDL_FreeSurface(surface);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    return texture;
+}
+
 int main(int argv, char **argc)
 {
     if (SDL_Init(SDL_INIT_EVERYTHING))
@@ -123,6 +135,13 @@ int main(int argv, char **argc)
         std::cout << "Failed to initialize SDL" << std::endl;
         return -1;
     }
+
+    if (TTF_Init() < 0)
+    {
+        std::cout << "Failed to initialize SDL TTF: " << SDL_GetError() << std::endl;
+    }
+
+    font = TTF_OpenFont("assets/OpenSans.ttf", 20);
 
     SDL_Window *window = SDL_CreateWindow(
         "LANsweeper",
@@ -151,6 +170,13 @@ int main(int argv, char **argc)
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
+    for (int i = 0; i < 9; i++)
+    {
+        char currDigit[2] = {(i == 0 ? '\0' : (char)('0' + i)), '\0'};
+        digitTextures[i] = generate_digit_texture(currDigit, renderer);
+        std::cout << "Generated for:" << (char)('0' + i) << std::endl;
+    }
+
     int dx = (WIDTH * MULTIPLIER) / DIFFICULTY;
     int dy = (HEIGHT * MULTIPLIER) / DIFFICULTY;
 
@@ -171,20 +197,22 @@ int main(int argv, char **argc)
     // draw right and bottom lines incase they are over the screens size
     SDL_RenderDrawLine(renderer, WIDTH * MULTIPLIER - 1, 0, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
     SDL_RenderDrawLine(renderer, 0, HEIGHT * MULTIPLIER - 1, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
-
     // draw bombs
     for (int i = 0; i < DIFFICULTY; i += 1)
     {
         for (int j = 0; j < DIFFICULTY; j += 1)
         {
-            if (board[i][j] == 'B')
-            {
+            int x1, y1;
+            x1 = (j)*dx;
+            y1 = (i)*dy;
+            if (board[i][j] == 'B') {
                 // std::cout << i << " " << j << std::endl;
-                int x1, y1;
-                x1 = (j) * dx;
-                y1 = (i) * dy;
+
                 // std::cout << x1 << " " << y1 << std::endl;
                 SDL_RenderDrawLine(renderer, x1, y1, x1 + dx, y1 + dy);
+            } else {
+                SDL_Rect rect = {x1, y1, dx, dy};
+                SDL_RenderCopy(renderer, digitTextures[board[i][j] - '0'], NULL, &rect);
             }
         }
     }
@@ -212,11 +240,9 @@ int main(int argv, char **argc)
                     int x = mousex / dx;
                     if (x >= 0 && x < DIFFICULTY && y >= 0 && y < DIFFICULTY)
                     {
-                        if (board[y][x] == 'B')
-                        {
+                        if (board[y][x] == 'B') {
                             std::cout << "BOOOOOOOOM!!!!!" << std::endl;
-                        }
-                        else {
+                        } else {
                             explore_board(board, DIFFICULTY, DIFFICULTY, x, y);
                             print_board(board, DIFFICULTY, DIFFICULTY);
                         }
@@ -232,7 +258,7 @@ int main(int argv, char **argc)
             // std::cout << "Game is running" << std::endl;
         }
     }
-
+    TTF_Quit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     return 0;
