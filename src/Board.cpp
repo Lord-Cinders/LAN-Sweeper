@@ -13,7 +13,7 @@ Board::Board(int w, int h, int diff) {
     height = h;
     difficulty = diff;
     seed = static_cast<unsigned int>(time(NULL));
-    board.resize(height, std::vector<Box>(10, Box()));
+    board.resize(height, std::vector<Box>(width, Box()));
 }
 
 void Board::set_tile_type(int x_pos, int y_pos, char type) {
@@ -74,7 +74,7 @@ void Board::generate_hints()
 
 void Board::generate_random_bombs()
 {
-    int count = difficulty; // static_cast<int>(width * height * (difficulty / 100.0));
+    int count = static_cast<int>(width * height * (difficulty / 100.0));
     int g_count = 0, bx = 0, by = 0;
     srand(seed);
     while (g_count < count)

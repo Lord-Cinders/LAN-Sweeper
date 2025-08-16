@@ -8,118 +8,10 @@
 #define WIDTH 200
 #define HEIGHT 200
 #define MULTIPLIER 3
-#define DIFFICULTY 10
+#define DIFFICULTY 15
 
 TTF_Font *font;
 SDL_Texture *digitTextures[10];
-
-// void print_line(int width)
-// {
-//     for (int i = 0; i < width * 2; i++)
-//     {
-//         std::cout << "_";
-//     }
-//     std::cout << std::endl;
-// }
-
-// void print_board(char **board, int width, int height)
-// {
-//     for (int i = 0; i < height; i++)
-//     {
-//         print_line(width);
-//         std::cout << "|";
-//         for (int j = 0; j < width; j++)
-//         {
-//             char temp = board[i][j] > 0 ? board[i][j] : ' ';
-//             std::cout << temp << "|";
-//         }
-//         std::cout << std::endl;
-//     }
-//     print_line(width);
-// }
-
-// void generate_random_bombs(char **board, int count, int width, int height)
-// {
-//     int g_count = 0, bx = 0, by = 0;
-//     srand(time(NULL));
-//     while (g_count < count)
-//     {
-
-//         bx = rand() % width;
-//         by = rand() % height;
-//         if (board[by][bx] != 'B')
-//         {
-//             board[by][bx] = 'B';
-//             g_count += 1;
-//         }
-//     }
-//     print_board(board, width, height);
-// }
-
-// void generate_hints(char ** board, int width, int height) {
-
-//     int offsets[8][2] = {
-//         {-1, -1}, {0, -1}, {1, -1}, // top row
-//         {-1, 0}, {1, 0},            // same row
-//         {-1, 1}, {0, 1}, {1, 1}     // bottom row
-//     };
-
-//     for (int y = 0; y < height; y++){
-//         for (int x = 0; x < width; x++) {
-
-//             int count = 0;
-
-//             if (board[y][x] == 'B') { continue; }
-
-//             for (auto &dir : offsets) {
-//                 int nr = x + dir[0];
-//                 int nc = y + dir[1];
-
-//                 if (nr >= 0 && nr < width && nc >= 0 && nc < height )
-//                 {
-//                     if (board[nc][nr] == 'B')
-//                     {
-//                         count++;
-//                     }
-//                 }
-//             }
-
-//             board[y][x] = count + '0';
-//         }
-//     }
-//     print_board(board, width, height);
-// }
-
-// void explore_board(char **board, int width, int height, int x_pos, int y_pos)
-// {
-//     int offsets[8][2] = {
-//         {-1, -1}, {0, -1}, {1, -1}, // top row
-//         {-1, 0}, {1, 0},            // same row
-//         {-1, 1}, {0, 1}, {1, 1}     // bottom row
-//     };
-
-//     if (board[y_pos][x_pos] != '0')
-//     {
-//         return;
-//     }
-
-//     board[y_pos][x_pos] = '\0';
-//     std::cout << "Current x, y: " << x_pos << " " << y_pos << std::endl;
-
-//     for (auto &dir : offsets)
-//     {
-//         int nc = y_pos + dir[1];
-//         int nr = x_pos + dir[0];
-
-//         if (nr >= 0 && nr < width && nc >= 0 && nc < height)
-//         {
-//             if (board[nc][nr] == '0')
-//             {
-//                 explore_board(board, width, height, nr, nc);
-//             }
-//         }
-//     }
-// }
 
 SDL_Texture *generate_digit_texture(char *digit, SDL_Renderer *renderer)
 {
@@ -133,9 +25,50 @@ SDL_Texture *generate_digit_texture(char *digit, SDL_Renderer *renderer)
 void generate_board(SDL_Renderer *renderer)
 {
     SDL_SetRenderDrawColor(renderer, 204, 204, 255, 255);
-    
+
     int dx = (WIDTH * MULTIPLIER) / DIFFICULTY;
     int dy = (HEIGHT * MULTIPLIER) / DIFFICULTY;
+
+    // drawing vertical lines
+    for (int i = 0; i <= DIFFICULTY; i++)
+    {
+        int x = i * dx;
+        SDL_RenderDrawLine(renderer, x, 0, x, HEIGHT * MULTIPLIER);
+    }
+
+    // drawing horizontal lines
+    for (int i = 0; i <= DIFFICULTY; i++)
+    {
+        int y = i * dy;
+        SDL_RenderDrawLine(renderer, 0, y, WIDTH * MULTIPLIER, y);
+    }
+
+    // draw right and bottom lines incase they are over the screens size
+    SDL_RenderDrawLine(renderer, WIDTH * MULTIPLIER - 1, 0, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
+    SDL_RenderDrawLine(renderer, 0, HEIGHT * MULTIPLIER - 1, WIDTH * MULTIPLIER - 1, HEIGHT * MULTIPLIER - 1);
+}
+
+void generate_initial_board(SDL_Renderer *renderer)
+{
+
+    int dx = (WIDTH * MULTIPLIER) / DIFFICULTY;
+    int dy = (HEIGHT * MULTIPLIER) / DIFFICULTY;
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+
+    for (int i = 0; i < DIFFICULTY; i += 1)
+    {
+        for (int j = 0; j < DIFFICULTY; j += 1)
+        {
+            int x1, y1;
+            x1 = (j)*dx;
+            y1 = (i)*dy;
+            SDL_Rect rect = {x1, y1, dx, dy};
+            SDL_RenderFillRect(renderer, &rect);
+        }
+    }
+
+    SDL_SetRenderDrawColor(renderer, 204, 204, 255, 255);
 
     // drawing vertical lines
     for (int i = 0; i <= DIFFICULTY; i++)
@@ -201,15 +134,16 @@ int main(int argv, char **argc)
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-
+    int rectW, rectH;
     for (int i = 0; i < 9; i++)
     {
         char currDigit[2] = {(i == 0 ? '\0' : (char)('0' + i)), '\0'};
         digitTextures[i] = generate_digit_texture(currDigit, renderer);
         std::cout << "Generated for:" << (char)('0' + i) << std::endl;
+        TTF_SizeText(font, currDigit, &rectW, &rectH);
     }
 
-    generate_board(renderer);
+    generate_initial_board(renderer);
 
     // draw bombs
     // for (int i = 0; i < DIFFICULTY; i += 1)
@@ -266,6 +200,8 @@ int main(int argv, char **argc)
                         if (board.check_tile(x, y) == 'B')
                         {
                             std::cout << "BOOOOOOOOM!!!!!" << std::endl;
+                            running = false;
+                            break;
                         }
                         else
                         {
@@ -278,7 +214,7 @@ int main(int argv, char **argc)
                                     int x1, y1;
                                     x1 = (j)*dx;
                                     y1 = (i)*dy;
-                                    //std::cout <<"POS: "<<i<<","<<j<< " Tile: " << board.check_tile(j, i) << " Visibility: " << board.get_visibility(j, i) << std::endl;
+                                    // std::cout <<"POS: "<<i<<","<<j<< " Tile: " << board.check_tile(j, i) << " Visibility: " << board.get_visibility(j, i) << std::endl;
                                     if (board.get_visibility(j, i))
                                     {
                                         char tile = board.check_tile(j, i);
@@ -287,11 +223,12 @@ int main(int argv, char **argc)
                                         {
                                             // std::cout << "Tile: " << tile << std::endl;
                                             // std::cout << "TTTTTTTTTTTTTTT" << std::endl;
-                                            SDL_Rect rect = {x1, y1, dx, dy};
+                                            SDL_Rect rect = {(x1 + x1 + dx) / 2 - (rectW / 2), (y1 + y1 + dy) / 2 - (rectH / 2), rectW, rectH};
                                             SDL_RenderCopy(renderer, digitTextures[tile - '0'], NULL, &rect);
                                         }
                                     }
-                                    else{
+                                    else
+                                    {
                                         SDL_Rect rect = {x1, y1, dx, dy};
                                         SDL_RenderFillRect(renderer, &rect);
                                     }
